@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>おしゃべりオウム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+:root{
+  --bg:#EAF6F1;--surface:#FFFFFF;--ink:#14323A;--muted:#5B7A80;--line:#C9E3DA;
+  --green:#2E9E5B;--yellow:#FFC93C;--red:#E5473B;--on-accent:#FFFFFF;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#0F2227;--surface:#173238;--ink:#E6F4F0;--muted:#93B1B3;--line:#25454C;--green:#3DB36C}
+}
+:root[data-theme="dark"]{--bg:#0F2227;--surface:#173238;--ink:#E6F4F0;--muted:#93B1B3;--line:#25454C;--green:#3DB36C}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.7;padding-bottom:110px}
+main{max-width:460px;margin:0 auto;padding:20px 18px}
+h1{font-size:1.5rem;font-weight:900;margin:0;text-align:center}
+.sub{text-align:center;color:var(--muted);margin:2px 0 26px;font-size:.9rem}
+.status{text-align:center;min-height:1.7em;margin:0 0 10px;font-weight:500}
+.rec-wrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+#rec{width:92px;height:92px;border-radius:50%;border:0;background:var(--red);color:var(--on-accent);display:grid;place-items:center;cursor:pointer;box-shadow:0 0 0 6px color-mix(in srgb,var(--red) 22%,transparent)}
+#rec svg{width:38px;height:38px}
+#rec.on{animation:pulse 1.1s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--red) 55%,transparent)}100%{box-shadow:0 0 0 22px transparent}}
+@media (prefers-reduced-motion:reduce){#rec.on{animation:none}}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.rec-label{font-weight:700}
+#draft{display:none;margin-top:18px}
+#draft.show{display:block}
+textarea{width:100%;min-height:96px;border:2px solid var(--line);border-radius:14px;padding:12px;font:inherit;background:var(--surface);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;margin-top:10px}
+.btn{flex:1;border:0;border-radius:14px;padding:12px 14px;font:inherit;font-weight:700;cursor:pointer;background:var(--green);color:var(--on-accent)}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+h2{font-size:1.05rem;margin:28px 0 8px}
+ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+li{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start}
+li.now{border-color:var(--yellow);background:color-mix(in srgb,var(--yellow) 22%,var(--surface))}
+li .t{flex:1;word-break:break-word}
+li .d{color:var(--muted);font-size:.78rem;display:block}
+li button{border:0;background:transparent;color:var(--muted);font:inherit;cursor:pointer;padding:2px 4px}
+.empty{color:var(--muted);padding:6px 2px}
+.tune{margin-top:22px;color:var(--muted);font-size:.85rem}
+.tune input{width:100%;accent-color:var(--green)}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:2px solid var(--line);padding:10px 18px calc(10px + env(safe-area-inset-bottom,0px))}
+.bar .in{max-width:460px;margin:0 auto;display:flex;gap:10px}
+.bar .btn{background:var(--yellow);color:#3A2A00;font-size:1.05rem}
+.bar .btn.stop{flex:0 0 38%;background:transparent;color:var(--ink);border:2px solid var(--line)}
+.bar .btn:disabled{opacity:.45;cursor:default}
+</style>
+</head>
+<body>
+<main id="app">
+  <h1>おしゃべりオウム</h1>
+  <p class="sub">見えない思いやりを、みんなに伝えるよ</p>
+
+  <p class="status" id="status" aria-live="polite">ボタンを押して、見つけた思いやりを話してね</p>
+
+  <div class="rec-wrap">
+    <button id="rec" aria-label="録音を始める">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 0 0-8 0v5a4 4 0 0 0 4 4Zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2Z"/></svg>
+    </button>
+    <span class="rec-label" id="recLabel">話す</span>
+  </div>
+
+  <section id="draft">
+    <textarea id="draftText" aria-label="聞き取った内容"></textarea>
+    <div class="row">
+      <button class="btn ghost" id="redo">やり直す</button>
+      <button class="btn" id="save">オウムに覚えさせる</button>
+    </div>
+  </section>
+
+  <h2 id="listTitle">たまった思いやり</h2>
+  <ul id="list"></ul>
+
+  <div class="tune">
+    <label for="pitch">オウムの声の高さ</label>
+    <input type="range" id="pitch" min="0.8" max="2" step="0.1" value="1.7">
+  </div>
+</main>
+
+<div class="bar">
+  <div class="in">
+    <button class="btn" id="play">みんなに話す</button>
+    <button class="btn stop" id="stop" disabled>止める</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var KEY="parrot.episodes.v1", PKEY="parrot.pitch.v1";
+  var $=function(id){return document.getElementById(id)};
+  var app=$("app"), statusEl=$("status"), rec=$("rec"), recLabel=$("recLabel"),
+      draft=$("draft"), draftText=$("draftText"), listEl=$("list"), listTitle=$("listTitle"),
+      playBtn=$("play"), stopBtn=$("stop"), pitchEl=$("pitch");
+
+  var episodes=[];
+  try{episodes=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){episodes=[]}
+  try{var p=localStorage.getItem(PKEY); if(p) pitchEl.value=p}catch(e){}
+  function persist(){try{localStorage.setItem(KEY,JSON.stringify(episodes))}catch(e){}}
+  pitchEl.addEventListener("input",function(){try{localStorage.setItem(PKEY,pitchEl.value)}catch(e){}});
+
+  function say(t){statusEl.textContent=t}
+
+  /* ---------- 一覧 ---------- */
+  var nowIndex=-1;
+  function render(){
+    listEl.textContent="";
+    listTitle.textContent="たまった思いやり（"+episodes.length+"）";
+    if(!episodes.length){
+      var e=document.createElement("li");e.className="empty";e.style.border="0";e.style.background="none";
+      e.textContent="まだありません。「話す」を押して、見つけた親切を教えてね。";
+      listEl.appendChild(e);
+    }
+    episodes.forEach(function(ep,i){
+      var li=document.createElement("li"); if(i===nowIndex) li.className="now";
+      var box=document.createElement("div"); box.className="t";
+      box.textContent=ep.text;
+      var d=document.createElement("span"); d.className="d";
+      d.textContent=new Date(ep.at).toLocaleString("ja-JP",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
+      box.appendChild(d);
+      var del=document.createElement("button"); del.textContent="消す"; del.setAttribute("aria-label","この思いやりを消す");
+      del.addEventListener("click",function(){
+        if(playing) return;
+        episodes.splice(i,1); persist(); render();
+      });
+      li.appendChild(box); li.appendChild(del); listEl.appendChild(li);
+    });
+    playBtn.disabled=!episodes.length;
+  }
+
+  /* ---------- 声（オウム） ---------- */
+  var synth=window.speechSynthesis, playing=false, cancelled=false;
+  function jaVoice(){
+    if(!synth) return null;
+    var vs=synth.getVoices();
+    for(var i=0;i<vs.length;i++){ if(vs[i].lang && vs[i].lang.toLowerCase().replace("_","-").indexOf("ja")===0) return vs[i]; }
+    return null;
+  }
+  function speak(text){
+    return new Promise(function(resolve){
+      if(!synth){resolve();return}
+      var u=new SpeechSynthesisUtterance(text);
+      u.lang="ja-JP"; var v=jaVoice(); if(v) u.voice=v;
+      u.pitch=parseFloat(pitchEl.value)||1.7; u.rate=1.08;
+      u.onstart=function(){app.classList.add("speaking")};
+      u.onend=function(){app.classList.remove("speaking");resolve()};
+      u.onerror=function(){app.classList.remove("speaking");resolve()};
+      synth.speak(u);
+    });
+  }
+  var ordinals=["ひとつめ","ふたつめ","みっつめ","よっつめ","いつつめ","むっつめ","ななつめ","やっつめ","ここのつめ","とおめ"];
+  async function playAll(){
+    if(playing||!episodes.length) return;
+    if(!synth){say("このブラウザは読み上げに対応していません");return}
+    playing=true; cancelled=false; playBtn.disabled=true; stopBtn.disabled=false; rec.disabled=true;
+    synth.cancel();
+    say("オウムが話しているよ");
+    await speak("あのね、聞いてね。みんなの思いやりを、おはなしするよ。");
+    for(var i=0;i<episodes.length;i++){
+      if(cancelled) break;
+      nowIndex=i; render();
+      var lead=(ordinals[i]||"つぎ")+"。";
+      await speak(lead);
+      if(cancelled) break;
+      await speak(episodes[i].text);
+    }
+    if(!cancelled) await speak("みんな、ありがとう。");
+    finish();
+  }
+  function finish(){
+    playing=false; nowIndex=-1; app.classList.remove("speaking");
+    stopBtn.disabled=true; rec.disabled=false; render(); say("ボタンを押して、見つけた思いやりを話してね");
+  }
+  playBtn.addEventListener("click",playAll);
+  stopBtn.addEventListener("click",function(){cancelled=true; if(synth) synth.cancel(); finish()});
+  if(synth && synth.onvoiceschanged!==undefined) synth.onvoiceschanged=function(){};
+
+  /* ---------- 録音（音声認識） ---------- */
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition, recog=null, recording=false, autoSave=false;
+  function showDraft(){draft.classList.add("show")}
+  function setRecording(on){
+    recording=on; rec.classList.toggle("on",on);
+    rec.setAttribute("aria-label",on?"録音を止める":"録音を始める");
+    recLabel.textContent=on?"止める":"話す";
+  }
+  function startRec(){
+    if(playing) return;
+    showDraft();
+    if(!SR){
+      say("このブラウザは音声認識に対応していません。下の欄に文字で入力してね");
+      draftText.focus(); return;
+    }
+    recog=new SR(); recog.lang="ja-JP"; recog.interimResults=true; recog.continuous=true;
+    recog.onresult=function(ev){
+      var fin="", interim="";
+      for(var i=0;i<ev.results.length;i++){
+        var r=ev.results[i];
+        if(r.isFinal) fin+=r[0].transcript; else interim+=r[0].transcript;
+      }
+      draftText.value=fin+interim;
+    };
+    recog.onerror=function(ev){
+      var m={"not-allowed":"マイクが許可されていません。ブラウザの設定で許可してね","service-not-allowed":"音声認識が使えません。設定でSiriと音声入力（ディクテーション）をオンにしてね","no-speech":"声が聞こえませんでした。もう一度話してね","network":"ネットワークにつながっていません"};
+      say((m[ev.error]||"うまく聞き取れませんでした")+"（"+ev.error+"）");
+    };
+    recog.onend=function(){
+      setRecording(false);
+      if(autoSave){ autoSave=false; if(draftText.value.trim()) saveDraft(); else draft.classList.remove("show"); return; }
+      if(draftText.value.trim()) say("聞き取れたよ。直したいところは直して、覚えさせてね");
+    };
+    try{ draftText.value=""; recog.start(); setRecording(true); say("聞いているよ。話し終わったら「止める」を押してね"); }
+    catch(e){ say("録音を始められませんでした"); setRecording(false); }
+  }
+  rec.addEventListener("click",function(){
+    if(recording){ try{recog.stop()}catch(e){} } else startRec();
+  });
+  $("redo").addEventListener("click",function(){
+    if(recording){ try{recog.abort()}catch(e){} }
+    draftText.value=""; startRec();
+  });
+  async function saveDraft(){
+    var t=draftText.value.trim();
+    if(!t){say("まだ何も入っていません");return}
+    if(recording){ try{recog.abort()}catch(e){} setRecording(false); }
+    episodes.push({id:Date.now(),text:t,at:new Date().toISOString()});
+    persist(); draftText.value=""; draft.classList.remove("show"); render();
+    say("覚えたよ！");
+    await speak("おぼえたよ。ありがとう。");
+    say("ボタンを押して、見つけた思いやりを話してね");
+  }
+  $("save").addEventListener("click",saveDraft);
+
+  /* 物理ボタン（Bluetoothキーボードとして届く）: r=録音の開始/終了(終了で自動保存), p=再生/停止 */
+  document.addEventListener("keydown",function(ev){
+    var tag=ev.target&&ev.target.tagName;
+    if(ev.repeat||tag==="TEXTAREA"||tag==="INPUT") return;
+    var k=(ev.key||"").toLowerCase();
+    if(k==="r"){
+      ev.preventDefault();
+      if(recording){ try{recog.stop()}catch(e){} }
+      else if(!playing){ autoSave=true; startRec(); if(!recording) autoSave=false; }
+    } else if(k==="p"){
+      ev.preventDefault();
+      if(playing) stopBtn.click(); else if(!recording) playBtn.click();
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
